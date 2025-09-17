@@ -23,9 +23,6 @@ int minReversals(string s) {
 simple enough n iterations, find number of chars repeated, so 999 becomes 39 and so on
 use of to_string function
 */
-/*
-Look into KMP algorithm for this problem which includes longest prefix suffix calculation.
-*/
 string countAndSay(int n) {
     string s = "1";
     if (n == 1)
