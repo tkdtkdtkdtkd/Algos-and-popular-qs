@@ -103,3 +103,154 @@ vector < int > rabinKarp(string & text, string & pattern) {
     }
     return res;
 }
+
+5. Z-Function // z[i] denotes the number of characters starting from ith index that match with characters starting from 0th index
+
+int strStr(string haystack, string needle) {
+    string s = needle + "$" + haystack;
+    int n = s.size(), m = needle.size();
+    if(m==0) return 0;
+    int l = 0, r = 0;
+    vector<int> z(n, 0);
+    for (int i = 1; i < n; i++) {
+        if (i <= r) {
+            //if i is within range l and r, then reuse precomputed stuff, we know that substring from l to r is same as 0 to r-l, so i should be same as i-l, also it cannot exceed r so min(z[i-l],r-i+1)
+            z[i] = min(z[i - l], r - i + 1);
+        }
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]])
+            z[i]++; //keep going till it matches
+        if (i + z[i] - 1 > r) {
+            r = i + z[i] - 1;
+            l = i; //update l and r accordingly
+        }
+        if (z[i] == m)
+            return i-(m+1); //$ contributes 1 more index so len of needle+"$"
+    }
+    return -1;
+}
+
+6. KMP / LPS(pi) algo
+
+//lps[i] stores length of prefix that is = suffix in range 0 to i
+vector < int > makeLPS(string s) {
+    int m = s.size();
+    vector < int > lps(m, 0);
+    int len = 0, i = 1;
+    while (i < m) {
+        if (s[i] == s[len]) {
+            len++;
+            lps[i] = len;
+            i++;
+        }
+        else {
+            if (len != 0) {
+                //try next smallest prefix and see if that matches, don't change i yet
+                len = lps[len - 1];
+            }
+            else {
+                lps[i] = 0;
+                i++;
+            }
+        }
+    }
+    return lps;
+}
+
+int strStr(string haystack, string needle) {
+    int i = 0, j = 0;
+    int n = haystack.size(), m = needle.size();
+    vector < int > lps = makeLPS(needle);
+    while (i < n) {
+        if (haystack[i] == needle[j]) {
+            i++;
+            j++;
+        }
+        if (j == m) return i - m;
+        else if (i < n && haystack[i] != needle[j]) {
+            //move to longest smaller prefix that might still match
+            if (j != 0) j = lps[j - 1];
+            else i++;
+        }
+    }
+    return -1;
+}
+
+7. Add characters to the front of string s and make it a palindrome, return the palindrome.
+
+//master = "aacecaaa$aaacecaa" string+"$"+reversed_string
+
+vector < int > makeLPS(string s) {
+    int n = s.size();
+    vector < int > lps(n, 0);
+    int len = 0, i = 1;
+    while (i < n) {
+        if (s[i] == s[len]) {
+            len++;
+            lps[i] = len;
+            i++;
+        } else {
+            if (len != 0)
+                len = lps[len - 1];
+            else {
+                lps[i] = 0;
+                i++;
+            }
+        }
+    }
+    return lps;
+}
+
+string shortestPalindrome(string s) {
+    int n = s.size();
+    if (n < 2)
+        return s;
+    string rev = s;
+    reverse(rev.begin(), rev.end());
+    string master = s + "$" + rev;
+    vector < int > lps = makeLPS(master);
+    int maxi = lps.back(); //find prefix=suffix for lps[n-1]! not the just the longest
+    string toAdd = s.substr(maxi); //s.substr(start)->default till the end, or you can do s.substr(start,len)
+    reverse(toAdd.begin(), toAdd.end());
+    return toAdd + s;
+}
+
+Can also be done using Z function.
+
+vector < int > makeZ(string s) {
+    int n = s.size();
+    vector < int > z(n, 0);
+    int l = 0, r = 0;
+    for (int i = 1; i < n; i++) {
+        if (i <= r) {
+            z[i] = min(z[i - l], r - i + 1);
+        }
+        while (i + z[i] < n && s[i + z[i]] == s[z[i]])
+            z[i]++;
+        if (i + z[i] > r) {
+            r = i + z[i];
+            l = i;
+        }
+    }
+    return z;
+}
+
+string shortestPalindrome(string s) {
+    int n = s.size();
+    string rev = s;
+    reverse(rev.begin(), rev.end());
+    string master = s + "$" + rev;
+    vector < int > z = makeZ(master);
+    int longest = 0;
+    for (int i = n + 1; i < 2 * n + 1; i++) {
+        if (i + z[i] == 2 * n + 1) { //again see that the suffix is till the end
+            longest = z[i];
+            break;
+        }
+    }
+    string to_add = s.substr(longest);
+    reverse(to_add.begin(), to_add.end());
+    return to_add + s;
+}
+
+8. Longest happy prefix-> direct implementation of Z-function / KMP algo
+
